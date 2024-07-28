@@ -46,6 +46,62 @@ const router = Router();
  *         description: Passwords do not match
  *       500:
  *         description: Internal server error
+ *
+ * /api/auth/login:
+ *   post:
+ *     summary: Login a user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User logged in successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid email or password
+ *       500:
+ *         description: Internal server error
+ *
+ * /api/auth/user:
+ *   get:
+ *     summary: Get user details
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
  */
 
 // Register endpoint
@@ -65,7 +121,7 @@ router.post("/register", async (req, res) => {
       process.env.JWT_SECRET as string,
       { expiresIn: "1h" }
     );
-    res.json({ token });
+    res.status(201).json({ token });
   } catch (error) {
     console.log(error);
 
@@ -73,6 +129,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Login endpoint
 router.post(
   "/login",
   [
@@ -101,7 +158,7 @@ router.post(
         { expiresIn: 360000 },
         (err, token) => {
           if (err) throw err;
-          res.json({ token });
+          res.status(200).json({ token });
         }
       );
     } catch (err: any) {
@@ -111,30 +168,23 @@ router.post(
   }
 );
 
-export default router;
+// User details endpoint
+router.get("/user", async (req: Request, res: Response) => {
+  // get the token from header
+  const token = req.headers.authorization?.split(" ")[1];
+  try {
+    // Decode tje JWT token
+    const decoded: any = jwt.verify(
+      token as string,
+      process.env.JWT_SECRET as string
+    ) as { userId: string };
 
-/**
- * @swagger
- * /api/auth/user:
- *   get:
- *     summary: Get user details
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: User details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 _id:
- *                   type: string
- *                 username:
- *                   type: string
- *                 name:
- *                   type: string
- *       401:
- *         description: Unauthorized
- */
+    // Get the user details from database
+    const user = await User.findById(decoded.user.id).select("-password");
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+});
+
+export default router;
