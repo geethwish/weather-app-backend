@@ -32,7 +32,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/weather", weatherRoutes);
 swaggerSetup(app);
 
-console.log(process.env.PORT, "starting");
+console.log(process.env.PORT, "starting", domainListArray);
 
 const PORT = process.env.PORT || 5000;
 
