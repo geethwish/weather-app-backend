@@ -12,15 +12,7 @@ import swaggerSetup from "./swagger";
 dotenv.config();
 const app = express();
 
-// Use CORS middleware
-const domainList = process.env.ALLOWED_DOMAINS ?? "";
-const domainListArray = domainList.split(",");
-
-app.use(
-  cors({
-    origin: [...domainListArray],
-  })
-);
+app.use(cors({ origin: "*" }));
 
 // Establish Database connection
 connectDB();
@@ -32,7 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/weather", weatherRoutes);
 swaggerSetup(app);
 
-console.log(process.env.PORT, "starting", domainListArray);
+console.log(process.env.PORT, "starting");
 
 const PORT = process.env.PORT || 5000;
 
