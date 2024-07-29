@@ -13,16 +13,21 @@ dotenv.config();
 const app = express();
 
 // Use CORS middleware
+const domainList = process.env.ALLOWED_DOMAINS ?? "";
+const domainListArray = domainList.split(",");
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:4200"],
+    origin: [...domainListArray],
   })
 );
 
+// Establish Database connection
 connectDB();
 
 app.use(express.json());
 
+// Handle routes
 app.use("/api/auth", authRoutes);
 app.use("/api/weather", weatherRoutes);
 swaggerSetup(app);
@@ -32,3 +37,5 @@ console.log(process.env.PORT);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+export default app;
